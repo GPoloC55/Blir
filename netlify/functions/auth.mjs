@@ -13,6 +13,8 @@ export default async (req) => {
       if (password && safeEqual(password, adminPassword())) {
         return json({ ok: true }, 200, { "set-cookie": makeSessionCookie() });
       }
+      // Pequeña espera para desalentar fuerza bruta
+      await new Promise((r) => setTimeout(r, 350));
       return json({ error: "Contraseña incorrecta" }, 401);
     } catch {
       return json({ error: "Solicitud inválida" }, 400);

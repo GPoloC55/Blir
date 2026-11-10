@@ -436,6 +436,15 @@ $("#fm").addEventListener("submit", submitForm);
     state.cart = state.cart.filter((l) => valid.has(l.variant_id));
     saveCart();
 
+    if (!state.shop.payments_enabled) {
+      const note = document.createElement("div");
+      note.className = "msg info";
+      note.style.margin = "0 0 18px";
+      note.textContent =
+        "Tienda en modo de prueba: el cobro en línea se activa al conectar Mercado Pago. Los pedidos no se cobran todavía.";
+      $("#chips").before(note);
+    }
+
     renderChips();
     setMode("retail");
   } catch (err) {

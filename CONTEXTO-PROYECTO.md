@@ -176,6 +176,26 @@ no cobra. Sirve para probar toda la operación antes de abrir la pasarela.
 4. `npm run db:setup` una vez contra la base de producción.
 5. Deploy. Netlify reconstruye en cada push a `main`.
 
+### Estado del deploy (10 nov 2026)
+
+- **Tienda**: https://blir-sueteres.netlify.app
+- **Admin**: https://blir-sueteres.netlify.app/admin (usuario único; contraseña en
+  `.env` → `ADMIN_PASSWORD`).
+- **Base**: Neon, PostgreSQL 18, región `us-east-2`.
+- **Variables cargadas en Netlify**: `DATABASE_URL`, `ADMIN_PASSWORD`,
+  `AUTH_SECRET` (secretos, contextos production/deploy-preview/branch-deploy).
+- **Deploy manual** (mientras no esté autorizada la GitHub App):
+
+  ```
+  npx netlify-cli deploy --prod --dir=public --functions=netlify/functions \
+    --site=7455eba4-a985-4ff7-94c5-4a81318b0e25
+  ```
+
+- **Auto-deploy**: pendiente. En Netlify: *Project configuration → Build & deploy
+  → Repository → Link repository* y autorizar la GitHub App para `GPoloC55/Blir`.
+- **Pagos**: sin `MP_ACCESS_TOKEN` la tienda muestra un aviso de modo de prueba y
+  el checkout crea el pedido sin cobrar. Al cargar las credenciales se quita solo.
+
 ### Checklist para abrir la tienda (temporada 2026)
 
 Corte de paquetería: ~15–18 de diciembre. Trabajar hacia atrás:

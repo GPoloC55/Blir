@@ -1,5 +1,6 @@
 import { q } from "../lib/db.mjs";
 import { json } from "../lib/common.mjs";
+import { mpConfigured } from "../lib/payments.mjs";
 
 /**
  * GET /api/shop
@@ -43,6 +44,7 @@ export default async (req) => {
       shipping,
       wholesale_tiers: tiers,
       store: settings[0]?.value || {},
+      payments_enabled: mpConfigured(),
     },
     200,
     { "cache-control": "public, max-age=30, stale-while-revalidate=120" }
