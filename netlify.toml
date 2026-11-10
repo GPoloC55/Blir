@@ -17,10 +17,11 @@
   to = "/admin.html"
   status = 200
 
+# El checkout ahora vive en el diálogo de la tienda
 [[redirects]]
   from = "/checkout"
-  to = "/checkout.html"
-  status = 200
+  to = "/"
+  status = 301
 
 [[redirects]]
   from = "/gracias"

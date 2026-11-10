@@ -59,7 +59,7 @@ blir/
 ├── db/
 │   ├── schema.sql          Tablas, índices, función dead_stock()
 │   ├── place_order.sql     place_order() / mark_order_paid() / cancel_order()
-│   └── seed.sql            15 modelos, tallas S–XL, envíos y cupones
+│   └── seed.sql            16 modelos, tallas S–XL, mayoreo, envíos y cupones
 ├── netlify/
 │   ├── lib/
 │   │   ├── db.mjs          Cliente PostgreSQL (Neon serverless)
@@ -67,6 +67,7 @@ blir/
 │   │   └── payments.mjs    Mercado Pago (preferencia + consulta de pago)
 │   └── functions/
 │       ├── auth.mjs                 Login/logout admin
+│       ├── shop.mjs                 Catálogo público en una sola llamada
 │       ├── products.mjs             Catálogo + CRUD admin
 │       ├── orders.mjs               Crear pedido, listar, cambiar estado
 │       ├── checkout.mjs             Pedido + preferencia de pago
@@ -74,10 +75,17 @@ blir/
 │       ├── inventory.mjs            Ajustes y kardex
 │       └── reports.mjs              KPIs, ventas, estancados, stock crítico
 ├── public/
-│   ├── index.html / checkout.html / success.html / admin.html
-│   └── assets/ (styles.css, store.js, checkout.js, admin.js)
+│   ├── index.html                   Tienda (diseño original del cliente)
+│   ├── success.html                 Página de gracias / pago pendiente
+│   ├── admin.html                   Panel /admin
+│   ├── img/                         16 fotos de producto (jpg)
+│   └── assets/ (blir.css, store.js, styles.css, admin.js)
 └── scripts/setup-db.mjs    Aplica el SQL sin necesitar psql
 ```
+
+El diseño es el del cliente: se extrajo su CSS a `blir.css` y sus fotos base64
+a `public/img/`. `store.js` reemplaza el carrito de WhatsApp por catálogo con
+stock real y checkout con pasarela, conservando la misma identidad visual.
 
 ---
 
@@ -88,6 +96,7 @@ Prefijo público `/api/…` → `/.netlify/functions/:splat`.
 | Endpoint | Métodos | Acceso |
 |---|---|---|
 | `/api/auth` | POST, GET, DELETE | Login |
+| `/api/shop` | GET | Público (catálogo, stock, mayoreo, envíos) |
 | `/api/products` | GET; POST, DELETE | Público / admin |
 | `/api/orders` | POST; GET, PUT | Público / admin |
 | `/api/checkout` | POST | Público |
@@ -102,9 +111,11 @@ Prefijo público `/api/…` → `/.netlify/functions/:splat`.
 - `products` — nombre, slug, SKU base, categoría, precio, costo, imagen, badge.
 - `variants` — talla/color, SKU único, precio, **stock**.
 - `orders` — estados `pending → paid → preparing → shipped → delivered`
-  (más `cancelled` y `refunded`), totales en centavos, dirección, guía.
+  (más `cancelled` y `refunded`), totales en centavos, dirección, guía,
+  `mode` (`retail` o `wholesale`).
 - `order_items` — copia del precio al momento de la venta (nunca se recalcula).
 - `inventory_movements` — kardex: venta, compra, ajuste, devolución, cancelación.
+- `wholesale_tiers` — precio por pieza según el total de piezas del pedido.
 - `coupons`, `shipping_methods`, `carts`, `settings`.
 
 **Dinero siempre en centavos enteros** (`59900` = $599.00). Evita errores de
@@ -115,20 +126,29 @@ punto flotante.
 1. Los precios salen de la base; el cliente solo manda `variant_id` y `qty`.
 2. `place_order()` bloquea la variante y descuenta stock; si no alcanza, revierte
    **todo** el pedido. Probado: intentar comprar 999 piezas deja stock intacto.
-3. Cancelar devuelve el stock y registra el movimiento (idempotente).
+3. Cancelar devuelve el stock y registra el movimiento (idempotente). Un
+   reembolso o contracargo del webhook también devuelve el inventario.
 4. El webhook de pago es idempotente: `mark_order_paid()` no duplica nada.
+5. **Mayoreo**: el precio por pieza depende del total del pedido (6+ $349,
+   12+ $329, 24+ $299) y se aplica a todas las piezas. Si no llega al mínimo,
+   la base rechaza el pedido con `WHOLESALE_MIN:6`. El envío de mayoreo se
+   fuerza a `quote` y los cupones no aplican.
+6. Los cupones solo aplican a venta al público y se validan en la base.
 
 ---
 
 ## 6. Catálogo inicial
 
-Tomado del PDF *Ugly Catalogo 2026 v1* (15 láminas):
+Tomado del HTML *BLir · Suéteres navideños 2026* (16 diseños):
 
-Lo nuevo · Pinos · Noche Buena · Mickey · Star Wars · Harry Potter · Spider-Man ·
-Goofy · Snoopy · Copos · Snowman · Santa · Reno · Grinch · Personajes.
+Lo nuevo · Pinos · Clásicos · Noche Buena · Mickey · Star Wars · Harry Potter ·
+Spider · Goofy · Snoopy · Copos · Snowman · Santa · Reno · Grinch · Personajes.
 
-Cada modelo con tallas S/M/L/XL. Precios de arranque $549–$699 (a confirmar).
-Las fotos reales están pendientes: hoy la ficha usa un placeholder.
+Cada modelo con tallas S/M/L/XL. Precio público **$499**; mayoreo 6+ $349,
+12+ $329, 24+ $299. Categorías: Lo nuevo, Clásicos, Personajes.
+
+Los valores de arranque (stock por talla, costo $220, fotos) son provisionales:
+se ajustan desde `/admin` o con `db/seed.sql` cuando el cliente confirme.
 
 ---
 
@@ -156,6 +176,31 @@ no cobra. Sirve para probar toda la operación antes de abrir la pasarela.
 4. `npm run db:setup` una vez contra la base de producción.
 5. Deploy. Netlify reconstruye en cada push a `main`.
 
+### Checklist para abrir la tienda (temporada 2026)
+
+Corte de paquetería: ~15–18 de diciembre. Trabajar hacia atrás:
+
+1. Crear proyecto en Neon → copiar `DATABASE_URL` (con `?sslmode=require`).
+2. `npm run db:setup` (aplica esquema, funciones y datos iniciales).
+3. Crear sitio en Netlify desde GitHub y cargar las 3 variables base.
+4. Abrir `/admin`, entrar con `ADMIN_PASSWORD` y capturar stock real.
+5. Probar una compra en sandbox (sin `MP_ACCESS_TOKEN`): debe crear pedido,
+   descontar stock y llevar a `/gracias?…&sandbox=1`.
+6. Activar Mercado Pago: `MP_ACCESS_TOKEN` + `MP_WEBHOOK_SECRET`; comprar con
+   tarjeta real de bajo monto y verificar que el pedido pase a `paid`.
+7. Confirmar número de WhatsApp y dominio; ajustar `settings.store`.
+8. Prueba móvil real (iOS y Android) y una guía de paquetería de punta a punta.
+
+### Probar sin base de datos
+
+El frontend se puede revisar con cualquier servidor estático, pero `/api/shop`
+debe responder. Para pruebas de UI se usó un mock de `/api/shop`, `/api/orders`
+y `/api/checkout` con los datos de `seed.sql`; no forma parte del repo.
+
+`@neondatabase/serverless` habla por HTTP, así que las Functions no pueden
+conectarse a un Postgres local en Docker. Para desarrollo se recomienda una
+rama de Neon (gratis) o el mock.
+
 ---
 
 ## 8. Roadmap
@@ -163,10 +208,11 @@ no cobra. Sirve para probar toda la operación antes de abrir la pasarela.
 | Fase | Alcance | Estado |
 |---|---|---|
 | **0. Base** | Esquema, API, admin, checkout sandbox, reportes | ✅ hecho |
-| **1. Cobro real** | Cuenta Mercado Pago, webhook, pruebas en producción | ⏳ depende de credenciales |
-| **2. Operación** | Skydropx, guías, tracking, correos, cupones | ⏳ |
-| **3. Contenido** | Fotos reales, precios, stock, SEO, analytics | ⏳ |
-| **4. IA** | WhatsApp, carrito abandonado, recomendaciones | ⏳ |
+| **1. Diseño** | Integrar el HTML del cliente, fotos, catálogo dinámico | ✅ hecho |
+| **2. Cobro real** | Cuenta Mercado Pago, webhook, pruebas en producción | ⏳ depende de credenciales |
+| **3. Operación** | Skydropx, guías, tracking, correos, cupones | ⏳ |
+| **4. Contenido** | Precios, costos y stock reales, SEO, analytics | ⏳ |
+| **5. IA** | WhatsApp, carrito abandonado, recomendaciones | ⏳ |
 
 ### IA: por orden de retorno
 
@@ -183,18 +229,20 @@ humana y se mide lift incremental.
 
 ## 9. Pendientes y decisiones abiertas
 
-- [ ] **Diseño original**: el HTML de `~/Documents/Blir sueteres navideños` no es
-      accesible por permisos de macOS (TCC). Moverlo a `~/Developer/blir-diseno`
-      o dar Full Disk Access para integrar el diseño real.
+- [x] **Diseño original**: integrado (CSS, fotos y estructura del HTML del cliente).
 - [ ] **Pasarela**: confirmar si se usa Mercado Pago (recomendado) o Clip.
 - [ ] **Envíos**: ¿Skydropx, paquetería directa o entrega local?
-- [ ] **Catálogo**: precios, costos, stock real y fotos.
+- [ ] **Catálogo**: precios, costos, stock real y fotos definitivas.
+- [ ] **WhatsApp**: número real del negocio (hoy vacío en `settings.store.phone`).
 - [ ] **Facturación**: CFDI 4.0 (Facturama) en fase 2.
 - [ ] **Dominio**: definir (ej. `blir.mx`) y apuntar a Netlify.
+- [ ] **Correos**: confirmación de pedido y guía (Resend o similar).
 
 ## 10. Seguridad
 
 - Cookie `blir_admin` HttpOnly, Secure, SameSite=Lax, firmada con HMAC-SHA256.
+- En producción el login se niega a funcionar si faltan `AUTH_SECRET` o
+  `ADMIN_PASSWORD` (no se usan credenciales de demo).
 - El admin nunca expone `DATABASE_URL` al navegador.
 - Los precios y el stock se validan en el servidor, no en el cliente.
 - Webhooks verificados por firma y por consulta directa a la API de pagos.

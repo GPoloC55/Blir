@@ -65,6 +65,8 @@ export default async (req) => {
       sandbox: true,
       order_id: order.id,
       total_cents: order.total_cents,
+      discount_cents: order.discount_cents,
+      coupon_code: order.coupon_code,
       redirect: `/gracias?order=${order.id}&sandbox=1`,
       note: "Mercado Pago no está configurado: el pedido se creó sin cobro.",
     });

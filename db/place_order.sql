@@ -5,14 +5,17 @@
 --   · Los precios salen SIEMPRE de la base, nunca del cliente.
 --   · Bloquea las variantes (FOR UPDATE) y descuenta stock con validación.
 --   · Si una talla no alcanza, toda la operación se revierte (sin sobreventa).
+--   · Mayoreo: el precio por pieza depende del total de piezas del carrito
+--     (tabla wholesale_tiers) y se aplica por igual a todos los modelos.
 --   · Calcula subtotal, cupón, envío y total.
 --   · Registra el movimiento de inventario (kardex).
 --
 -- payload = {
+--   mode: "retail" | "wholesale",
 --   items: [{ variant_id, qty }],
---   customer: { name, email, phone },
+--   customer: { name, email, phone, company?, rfc? },
 --   shipping_address: { street, city, state, zip },
---   shipping_method: "pickup" | "paqueteria" | ...,
+--   shipping_method: "pickup" | "local" | "paqueteria" | "quote",
 --   coupon: "BIENVENIDA",
 --   notes: ""
 -- }
@@ -29,6 +32,12 @@ declare
   v_var         variants%rowtype;
   v_prod        products%rowtype;
   v_qty         int;
+  v_units       int := 0;
+  v_unit        int;
+  v_mode        text := case when payload->>'mode' = 'wholesale'
+                              then 'wholesale' else 'retail' end;
+  v_ws_price    int;
+  v_ws_min      int;
   v_subtotal    int := 0;
   v_shipping    int := 0;
   v_discount    int := 0;
@@ -43,12 +52,35 @@ begin
     raise exception 'EMPTY_CART' using errcode = 'P0001';
   end if;
 
+  -- Total de piezas (para el precio de mayoreo)
+  select coalesce(sum(greatest(1, coalesce((i->>'qty')::int, 1))), 0)
+    into v_units
+  from jsonb_array_elements(payload->'items') i;
+
+  if v_mode = 'wholesale' then
+    select coalesce(min(min_qty), 6) into v_ws_min from wholesale_tiers;
+    if v_units < v_ws_min then
+      raise exception 'WHOLESALE_MIN:%', v_ws_min;
+    end if;
+    select price_cents into v_ws_price
+      from wholesale_tiers
+      where min_qty <= v_units
+      order by min_qty desc
+      limit 1;
+    if v_ws_price is null then
+      raise exception 'WHOLESALE_MIN:%', v_ws_min;
+    end if;
+    -- El envío de mayoreo se cotiza aparte con el equipo
+    v_method := 'quote';
+  end if;
+
   v_order_id := 'BL-' || to_char(now(), 'YYMMDD') || '-' ||
                 upper(substr(encode(gen_random_bytes(4), 'hex'), 1, 6));
 
-  insert into orders (id, customer, shipping_address, shipping_method, notes)
+  insert into orders (id, mode, customer, shipping_address, shipping_method, notes)
   values (
     v_order_id,
+    v_mode,
     coalesce(payload->'customer', '{}'::jsonb),
     coalesce(payload->'shipping_address', '{}'::jsonb),
     v_method,
@@ -72,20 +104,23 @@ begin
       raise exception 'OUT_OF_STOCK:%:%', v_prod.name, v_var.size;
     end if;
 
+    v_unit := case when v_mode = 'wholesale' then v_ws_price else v_var.price_cents end;
+
     update variants set stock = stock - v_qty where id = v_var.id;
 
     insert into order_items (order_id, variant_id, sku, name, size, color,
                              unit_price_cents, qty, total_cents)
     values (v_order_id, v_var.id, v_var.sku, v_prod.name, v_var.size, v_var.color,
-            v_var.price_cents, v_qty, v_var.price_cents * v_qty);
+            v_unit, v_qty, v_unit * v_qty);
 
     insert into inventory_movements (variant_id, delta, reason, order_id)
     values (v_var.id, -v_qty, 'sale', v_order_id);
 
-    v_subtotal := v_subtotal + v_var.price_cents * v_qty;
+    v_subtotal := v_subtotal + v_unit * v_qty;
   end loop;
 
-  if v_coupon_code is not null then
+  -- Cupones solo en venta al público (el mayoreo ya tiene precio por volumen)
+  if v_mode = 'retail' and v_coupon_code is not null then
     select * into v_coupon from coupons
       where code = v_coupon_code and active
         and (expires_at is null or expires_at > now());
@@ -98,6 +133,8 @@ begin
     else
       v_coupon_code := null;
     end if;
+  else
+    v_coupon_code := null;
   end if;
 
   select * into v_ship from shipping_methods where code = v_method and active;
@@ -121,6 +158,9 @@ begin
 
   return jsonb_build_object(
     'id', v_order_id,
+    'mode', v_mode,
+    'units', v_units,
+    'unit_cents', case when v_mode = 'wholesale' then v_ws_price else null end,
     'subtotal_cents', v_subtotal,
     'shipping_cents', v_shipping,
     'discount_cents', v_discount,

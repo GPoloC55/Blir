@@ -73,6 +73,8 @@ create table if not exists orders (
   id                 text primary key,
   created_at         timestamptz not null default now(),
   updated_at         timestamptz not null default now(),
+  mode               text not null default 'retail'
+                       check (mode in ('retail','wholesale')),
   status             text not null default 'pending'
                        check (status in ('pending','paid','preparing','shipped','delivered','cancelled','refunded')),
   payment_status     text not null default 'unpaid'
@@ -99,6 +101,15 @@ create table if not exists orders (
 );
 create index if not exists orders_created_idx on orders(created_at desc);
 create index if not exists orders_status_idx on orders(status);
+
+-- Compatibilidad con bases creadas antes de existir el modo mayoreo
+alter table orders add column if not exists mode text not null default 'retail';
+
+-- Precios de mayoreo por volumen (globales, como en el sitio original)
+create table if not exists wholesale_tiers (
+  min_qty     int primary key check (min_qty > 1),
+  price_cents int not null check (price_cents > 0)
+);
 
 create table if not exists order_items (
   id               uuid primary key default gen_random_uuid(),

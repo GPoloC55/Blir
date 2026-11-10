@@ -1,89 +1,61 @@
 <!doctype html>
-<html lang="es-MX">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>BLir — Suéteres navideños | Cim Textiles</title>
-  <meta name="description" content="Suéteres navideños tejidos: clásicos, licencias y personajes. Envíos a todo México. Edición 2026.">
-  <meta property="og:title" content="BLir — Suéteres navideños 2026">
-  <meta property="og:description" content="El suéter que te hace ganar la foto. Edición navideña 2026.">
-  <link rel="stylesheet" href="/assets/styles.css">
+<html lang="es-MX"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BLir · Suéteres navideños 2026</title>
+<meta name="description" content="Suéteres navideños tejidos 2026. Compra personal o mayoreo desde 6 piezas. Envíos a todo México.">
+<meta name="theme-color" content="#0F3D2E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="BLir">
+<meta property="og:title" content="BLir · Suéteres navideños 2026">
+<meta property="og:description" content="Suéteres navideños tejidos. Compra personal o mayoreo desde 6 piezas. Envíos a todo México.">
+<meta property="og:image" content="/img/lo-nuevo.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/blir.css">
 </head>
 <body>
-  <header class="site-header">
-    <div class="wrap">
-      <a class="brand" href="/"><strong>BLir</strong><span>Suéteres navideños</span></a>
-      <nav class="site-nav">
-        <a href="#catalogo">Catálogo</a>
-        <a href="#envios">Envíos</a>
-        <a href="/admin">Admin</a>
-      </nav>
-      <button class="cart-btn" id="cartBtn">
-        Carrito <span class="count" id="cartCount">0</span>
-      </button>
-    </div>
-  </header>
+<header class="top"><div class="bar">
+<div class="logo">BLir</div>
+<div class="seg" role="group" aria-label="Tipo de compra"><button id="mC" aria-pressed="true">Compra personal</button><button id="mB" aria-pressed="false">Mayoreo</button></div>
+<button class="cartbtn" id="cb">Carrito (<span id="cn">0</span>)</button></div><div class="band"></div></header>
 
-  <section class="hero">
-    <div class="wrap">
-      <div>
-        <span class="kicker">Edición 2026</span>
-        <h1>El suéter que te hace ganar la foto.</h1>
-        <p>Tejido grueso, estampados que se ven de lejos y tallas para toda la familia. Clásicos, licencias y personajes: llega antes de que se agoten.</p>
-        <a class="btn" href="#catalogo">Ver catálogo</a>
-      </div>
-      <div class="hero-art">
-        <div>
-          <small>Cim Textiles</small>
-          <strong>Merry<br>Christmas</strong>
-          <small style="margin-top:10px;display:block">Colección 2026</small>
-        </div>
-      </div>
-    </div>
-  </section>
+<main id="app">
+<section class="hero"><h1>Suéteres navideños 2026</h1>
+<p id="sub">Tejidos con diseños de temporada, de renos a personajes. Elige tu modelo, tu talla y llévalo a casa.</p>
+<div class="tiers" id="tiers" aria-label="Precios de mayoreo"></div></section>
+<div class="chips" id="chips"></div><div class="grid" id="grid"></div>
+<p id="empty" style="display:none;color:var(--mute)">No hay modelos en esta categoría.</p></main>
 
-  <main class="section wrap" id="catalogo">
-    <div class="section-head">
-      <div>
-        <h2>Catálogo</h2>
-        <p id="catalogCount">Cargando…</p>
-      </div>
-    </div>
-    <div class="filters" id="filters"></div>
-    <div class="grid" id="grid"></div>
-  </main>
+<footer>BLir · Cim Textiles · Pedidos y dudas por WhatsApp</footer>
 
-  <section class="section wrap" id="envios" style="padding-top:0">
-    <div class="section-head"><div><h2>Envíos y entregas</h2></div></div>
-    <div class="two-col">
-      <div class="panel">
-        <h2>Paquetería nacional</h2>
-        <p class="hint">Cotizamos al momento del checkout. Envío gratis en compras desde $1,499 MXN. Entregas de 2 a 5 días hábiles.</p>
-      </div>
-      <div class="panel">
-        <h2>Entrega local CDMX</h2>
-        <p class="hint">Entrega el mismo día en zonas seleccionadas o recoge en tienda sin costo. Te avisamos por WhatsApp cuando tu pedido esté listo.</p>
-      </div>
-    </div>
-  </section>
+<dialog id="pd"><button class="x" aria-label="Cerrar" data-close>×</button><div class="pm"><img id="pi" alt=""><div class="tx"><h2 id="pn"></h2><div><b id="pp" style="font-size:22px"></b> <small id="pu" style="color:var(--mute)"></small></div><div id="sz"></div><button class="cta" id="add">Agregar al carrito</button></div></div></dialog>
 
-  <footer class="site-footer">
-    <div class="wrap">
-      <span>© 2026 BLir · Cim Textiles</span>
-      <span>Hecho en México · Pagos seguros con Mercado Pago</span>
-    </div>
-  </footer>
+<dialog id="cd" class="side"><div class="w"><div class="row" style="border:0"><h2>Tu carrito</h2><button class="x" style="position:static" aria-label="Cerrar" data-close>×</button></div><div id="lines"></div><div id="hint"></div><div class="row" style="margin-top:auto"><span>Total</span><b id="tt" style="font-size:22px"></b></div><button class="cta" id="go">Continuar</button></div></dialog>
 
-  <div class="scrim" id="scrim"></div>
-  <aside class="drawer" id="drawer" aria-label="Carrito">
-    <div class="drawer-head">
-      <h3>Tu carrito</h3>
-      <button class="icon-btn" id="closeCart" aria-label="Cerrar">×</button>
-    </div>
-    <div class="drawer-body" id="cartBody"></div>
-    <div class="drawer-foot" id="cartFoot"></div>
-  </aside>
+<dialog id="fd"><button class="x" aria-label="Cerrar" data-close>×</button>
+<form id="fm"><h2 id="ft"></h2>
+<label>Nombre completo<input name="n" required autocomplete="name"></label>
+<div class="field2">
+<label>Correo<input name="e" type="email" required autocomplete="email"></label>
+<label>WhatsApp<input name="t" type="tel" required autocomplete="tel"></label>
+</div>
+<label class="bo">Empresa o tienda<input name="c"></label>
+<label class="bo">RFC (opcional)<input name="r"></label>
+<div id="dir">
+<label>Dirección de entrega<input name="d" autocomplete="street-address"></label>
+<div class="field2">
+<label>Ciudad<input name="ci" autocomplete="address-level2"></label>
+<label>Estado<input name="st" autocomplete="address-level1"></label>
+</div>
+<label>Código postal<input name="z" inputmode="numeric" autocomplete="postal-code"></label>
+</div>
+<label class="ce">Método de envío<select name="sm" id="sm"></select></label>
+<label class="cp">Cupón (opcional)<input name="cp" placeholder="Ej. BIENVENIDA" autocomplete="off"></label>
+<div id="err" class="msg" style="display:none"></div>
+<button class="cta" id="sb" type="submit"></button>
+<p style="font-size:12px;color:var(--mute);margin:0" id="legal">Pago seguro con Mercado Pago. No guardamos datos de tarjeta.</p></form>
+<div id="ok" style="display:none;padding:28px"></div></dialog>
 
-  <script src="/assets/store.js"></script>
-</body>
-</html>
+<script src="/assets/store.js" defer></script>
+</body></html>

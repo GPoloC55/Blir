@@ -38,7 +38,7 @@ export async function createPreference({ order, items, baseUrl }) {
     back_urls: {
       success: `${baseUrl}/gracias?order=${order.id}`,
       pending: `${baseUrl}/gracias?order=${order.id}&pending=1`,
-      failure: `${baseUrl}/checkout?order=${order.id}&error=1`,
+      failure: `${baseUrl}/gracias?order=${order.id}&failure=1`,
     },
     auto_return: "approved",
     binary_mode: false,

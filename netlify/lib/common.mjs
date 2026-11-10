@@ -15,6 +15,23 @@ export function adminPassword() {
   return process.env.ADMIN_PASSWORD || "blir-demo-2026";
 }
 
+const isProd =
+  process.env.CONTEXT === "production" || process.env.NODE_ENV === "production";
+
+/** En producción no aceptamos credenciales por defecto. */
+export function configError() {
+  if (!isProd) return null;
+  if (!process.env.AUTH_SECRET) return "Falta configurar AUTH_SECRET en Netlify.";
+  if (!process.env.ADMIN_PASSWORD) return "Falta configurar ADMIN_PASSWORD en Netlify.";
+  return null;
+}
+
+export function safeEqual(a, b) {
+  const ha = crypto.createHash("sha256").update(String(a)).digest();
+  const hb = crypto.createHash("sha256").update(String(b)).digest();
+  return crypto.timingSafeEqual(ha, hb);
+}
+
 function sign(payload) {
   const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
   const mac = crypto.createHmac("sha256", SECRET).update(body).digest("base64url");
@@ -25,7 +42,7 @@ function verify(token) {
   if (!token || !token.includes(".")) return null;
   const [body, mac] = token.split(".");
   const expected = crypto.createHmac("sha256", SECRET).update(body).digest("base64url");
-  if (mac !== expected) return null;
+  if (!safeEqual(mac, expected)) return null;
   try {
     const payload = JSON.parse(Buffer.from(body, "base64url").toString("utf8"));
     if (payload.exp && Date.now() > payload.exp) return null;

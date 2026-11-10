@@ -3,7 +3,8 @@ import { json, isAuthed, requireAdmin } from "../lib/common.mjs";
 
 const LIST = `
   select p.id, p.slug, p.sku_base, p.name, p.description, p.category,
-         p.price_cents, p.compare_at_cents, p.cost_cents, p.image_url,
+         p.price_cents, p.compare_at_cents, p.image_url,
+         case when $1::boolean then p.cost_cents else null end as cost_cents,
          p.badge, p.active, p.sort,
          coalesce(
            json_agg(

@@ -1,41 +1,95 @@
 <!doctype html>
-<html lang="es-MX">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Gracias — BLir</title>
-  <link rel="stylesheet" href="/assets/styles.css">
+<html lang="es-MX"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gracias — BLir</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0F3D2E">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/blir.css">
+<style>
+  main{max-width:640px;padding:56px 16px 72px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:32px;text-align:center}
+  .panel .ico{font-size:44px;line-height:1}
+  .panel h1{font-size:clamp(28px,6vw,38px);margin:12px 0 10px}
+  .panel p{color:var(--mute);margin:0 0 12px}
+  .folio{font-weight:600;color:var(--ink);margin:18px 0}
+  .steps{display:grid;gap:8px;margin:22px 0;text-align:left}
+  .steps div{border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--mute)}
+  .steps b{color:var(--ink)}
+  .actions{display:grid;gap:10px;margin-top:22px}
+</style>
 </head>
 <body>
-  <header class="site-header">
-    <div class="wrap">
-      <a class="brand" href="/"><strong>BLir</strong><span>Suéteres navideños</span></a>
-    </div>
-  </header>
+<header class="top"><div class="bar">
+  <a class="logo" href="/" style="color:#fff;text-decoration:none">BLir</a>
+  <a class="cartbtn" href="/" style="text-decoration:none">Volver a la tienda</a>
+</div><div class="band"></div></header>
 
-  <main class="wrap" style="max-width:620px;padding:70px 0;text-align:center">
-    <div class="panel">
-      <div style="font-size:44px">🎄</div>
-      <h1 style="font-size:32px;color:var(--green);margin:10px 0 8px">¡Gracias por tu compra!</h1>
-      <p style="color:var(--muted)" id="msg">Estamos confirmando tu pago.</p>
-      <p style="margin:18px 0"><strong id="orderId"></strong></p>
-      <p class="hint">Te enviaremos la confirmación y el número de guía por correo y WhatsApp.</p>
-      <a class="btn" href="/" style="margin-top:18px">Volver a la tienda</a>
+<main id="app">
+  <section class="panel">
+    <div class="ico" id="ico">🎄</div>
+    <h1 id="title">¡Gracias por tu compra!</h1>
+    <p id="msg">Estamos confirmando tu pago.</p>
+    <p class="folio" id="orderId"></p>
+    <div class="steps" id="steps">
+      <div><b>1.</b> Recibes la confirmación por correo.</div>
+      <div><b>2.</b> Preparamos tu pedido en 1–2 días hábiles.</div>
+      <div><b>3.</b> Te compartimos la guía por WhatsApp en cuanto salga.</div>
     </div>
-  </main>
+    <div class="actions">
+      <a class="cta" href="/" style="text-decoration:none;text-align:center">Seguir comprando</a>
+      <a class="wa" id="wa" href="#" target="_blank" rel="noopener" style="display:none">Escribir por WhatsApp</a>
+    </div>
+  </section>
+</main>
 
-  <script>
-    const params = new URLSearchParams(location.search);
-    const order = params.get("order");
+<footer>BLir · Cim Textiles · Pedidos y dudas por WhatsApp</footer>
+
+<script>
+  (function () {
+    var params = new URLSearchParams(location.search);
+    var order = params.get("order");
+    var title = document.getElementById("title");
+    var msg = document.getElementById("msg");
+    var ico = document.getElementById("ico");
+
     if (order) {
       document.getElementById("orderId").textContent = "Pedido " + order;
-      document.getElementById("msg").textContent = params.get("sandbox")
-        ? "Pedido registrado en modo de prueba (sin cobro)."
-        : params.get("pending")
-        ? "Tu pago está pendiente de confirmación. Te avisaremos en cuanto se acredite."
-        : "Pago recibido. Tu pedido ya está en preparación.";
     }
-    localStorage.removeItem("blir_cart_v1");
-  </script>
-</body>
-</html>
+
+    if (params.get("sandbox")) {
+      ico.textContent = "🧪";
+      title.textContent = "Pedido de prueba registrado";
+      msg.textContent = "Modo de prueba: no se realizó ningún cobro. Cuando actives Mercado Pago, este paso llevará al pago real.";
+    } else if (params.get("pending")) {
+      ico.textContent = "⏳";
+      title.textContent = "Pago pendiente";
+      msg.textContent = "Tu pedido quedó apartado. Te avisamos por correo y WhatsApp en cuanto el pago se acredite.";
+    } else if (params.get("failure")) {
+      ico.textContent = "⚠️";
+      title.textContent = "No se completó el pago";
+      msg.textContent = "El cobro no se realizó y tu pedido sigue pendiente. Puedes intentar de nuevo o escribirnos.";
+      var retry = document.createElement("a");
+      retry.className = "cta";
+      retry.href = "/";
+      retry.style.cssText = "display:block;text-align:center;text-decoration:none;margin-top:10px";
+      retry.textContent = "Intentar de nuevo";
+      document.querySelector(".actions").prepend(retry);
+    }
+
+    // WhatsApp del negocio (se sobreescribe si la tienda expone el teléfono)
+    fetch("/api/shop").then(function (r) { return r.ok ? r.json() : null; }).then(function (shop) {
+      var phone = ((shop && shop.store && shop.store.phone) || "").replace(/\D/g, "");
+      var wa = document.getElementById("wa");
+      if (!phone) return;
+      var text = "Hola, tengo una duda sobre mi pedido" + (order ? " " + order : "") + " en blir.mx";
+      wa.href = "https://wa.me/" + phone + "?text=" + encodeURIComponent(text);
+      wa.style.display = "block";
+      wa.textContent = "Escribir por WhatsApp";
+    }).catch(function () {});
+
+    try { localStorage.removeItem("blir_cart_v2"); localStorage.removeItem("blir_cart_v1"); } catch (e) {}
+  })();
+</script>
+</body></html>

@@ -48,10 +48,15 @@ export default async (req) => {
 
     if (payment.status === "approved") {
       await q(`select mark_order_paid($1, 'mercadopago', $2)`, [orderId, String(paymentId)]);
-    } else if (payment.status === "refunded") {
+    } else if (payment.status === "refunded" || payment.status === "charged_back") {
+      // Devuelve las piezas al inventario y deja el pedido marcado como reembolsado
+      await q(`select cancel_order($1, $2)`, [
+        orderId,
+        payment.status === "charged_back" ? "contracargo" : "reembolso",
+      ]);
       await q(
-        `update orders set payment_status='refunded', status='refunded', updated_at=now() where id=$1`,
-        [orderId]
+        `update orders set payment_status=$2, status='refunded', updated_at=now() where id=$1`,
+        [orderId, payment.status]
       );
     }
     return json({ ok: true });
