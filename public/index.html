@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BLir — Suéteres navideños | Cim Textiles</title>
+  <meta name="description" content="Suéteres navideños tejidos: clásicos, licencias y personajes. Envíos a todo México. Edición 2026.">
+  <meta property="og:title" content="BLir — Suéteres navideños 2026">
+  <meta property="og:description" content="El suéter que te hace ganar la foto. Edición navideña 2026.">
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="/"><strong>BLir</strong><span>Suéteres navideños</span></a>
+      <nav class="site-nav">
+        <a href="#catalogo">Catálogo</a>
+        <a href="#envios">Envíos</a>
+        <a href="/admin">Admin</a>
+      </nav>
+      <button class="cart-btn" id="cartBtn">
+        Carrito <span class="count" id="cartCount">0</span>
+      </button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <span class="kicker">Edición 2026</span>
+        <h1>El suéter que te hace ganar la foto.</h1>
+        <p>Tejido grueso, estampados que se ven de lejos y tallas para toda la familia. Clásicos, licencias y personajes: llega antes de que se agoten.</p>
+        <a class="btn" href="#catalogo">Ver catálogo</a>
+      </div>
+      <div class="hero-art">
+        <div>
+          <small>Cim Textiles</small>
+          <strong>Merry<br>Christmas</strong>
+          <small style="margin-top:10px;display:block">Colección 2026</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main class="section wrap" id="catalogo">
+    <div class="section-head">
+      <div>
+        <h2>Catálogo</h2>
+        <p id="catalogCount">Cargando…</p>
+      </div>
+    </div>
+    <div class="filters" id="filters"></div>
+    <div class="grid" id="grid"></div>
+  </main>
+
+  <section class="section wrap" id="envios" style="padding-top:0">
+    <div class="section-head"><div><h2>Envíos y entregas</h2></div></div>
+    <div class="two-col">
+      <div class="panel">
+        <h2>Paquetería nacional</h2>
+        <p class="hint">Cotizamos al momento del checkout. Envío gratis en compras desde $1,499 MXN. Entregas de 2 a 5 días hábiles.</p>
+      </div>
+      <div class="panel">
+        <h2>Entrega local CDMX</h2>
+        <p class="hint">Entrega el mismo día en zonas seleccionadas o recoge en tienda sin costo. Te avisamos por WhatsApp cuando tu pedido esté listo.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>© 2026 BLir · Cim Textiles</span>
+      <span>Hecho en México · Pagos seguros con Mercado Pago</span>
+    </div>
+  </footer>
+
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer" aria-label="Carrito">
+    <div class="drawer-head">
+      <h3>Tu carrito</h3>
+      <button class="icon-btn" id="closeCart" aria-label="Cerrar">×</button>
+    </div>
+    <div class="drawer-body" id="cartBody"></div>
+    <div class="drawer-foot" id="cartFoot"></div>
+  </aside>
+
+  <script src="/assets/store.js"></script>
+</body>
+</html>

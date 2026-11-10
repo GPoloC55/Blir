@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gracias — BLir</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="/"><strong>BLir</strong><span>Suéteres navideños</span></a>
+    </div>
+  </header>
+
+  <main class="wrap" style="max-width:620px;padding:70px 0;text-align:center">
+    <div class="panel">
+      <div style="font-size:44px">🎄</div>
+      <h1 style="font-size:32px;color:var(--green);margin:10px 0 8px">¡Gracias por tu compra!</h1>
+      <p style="color:var(--muted)" id="msg">Estamos confirmando tu pago.</p>
+      <p style="margin:18px 0"><strong id="orderId"></strong></p>
+      <p class="hint">Te enviaremos la confirmación y el número de guía por correo y WhatsApp.</p>
+      <a class="btn" href="/" style="margin-top:18px">Volver a la tienda</a>
+    </div>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const order = params.get("order");
+    if (order) {
+      document.getElementById("orderId").textContent = "Pedido " + order;
+      document.getElementById("msg").textContent = params.get("sandbox")
+        ? "Pedido registrado en modo de prueba (sin cobro)."
+        : params.get("pending")
+        ? "Tu pago está pendiente de confirmación. Te avisaremos en cuanto se acredite."
+        : "Pago recibido. Tu pedido ya está en preparación.";
+    }
+    localStorage.removeItem("blir_cart_v1");
+  </script>
+</body>
+</html>
