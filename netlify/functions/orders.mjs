@@ -88,6 +88,13 @@ export default async (req) => {
         return json({ error: "Un producto del carrito ya no está disponible.", code: "VARIANT_NOT_FOUND" }, 409);
       }
       if (msg.includes("EMPTY_CART")) return json({ error: "El carrito está vacío." }, 400);
+      if (msg.includes("WHOLESALE_MIN")) {
+        const min = msg.split(":")[1] || "6";
+        return json(
+          { error: `El mayoreo empieza con ${min} piezas.`, code: "WHOLESALE_MIN" },
+          400
+        );
+      }
       console.error("orders POST:", err);
       return json({ error: "No se pudo crear el pedido." }, 500);
     }
@@ -101,8 +108,8 @@ export default async (req) => {
       if (!b.id) return json({ error: "Falta el id del pedido" }, 400);
 
       if (b.status === "cancelled") {
-        const rows = await q(`select cancel_order($1) as r`, [b.id]);
-        return json({ ok: true, order: rows[0].r });
+        const rows = await q(`select * from cancel_order($1)`, [b.id]);
+        return json({ ok: true, order: rows[0] });
       }
 
       const row = await one(

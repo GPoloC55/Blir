@@ -45,6 +45,14 @@ export default async (req) => {
         409
       );
     }
+    if (msg.includes("EMPTY_CART")) return json({ error: "El carrito está vacío." }, 400);
+    if (msg.includes("WHOLESALE_MIN")) {
+      const min = msg.split(":")[1] || "6";
+      return json(
+        { error: `El mayoreo empieza con ${min} piezas.`, code: "WHOLESALE_MIN" },
+        400
+      );
+    }
     console.error("checkout place_order:", err);
     return json({ error: "No se pudo crear el pedido." }, 500);
   }
